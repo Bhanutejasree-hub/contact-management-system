@@ -1,5 +1,7 @@
 
 import os
+from urllib.parse import urlparse, unquote
+
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect, url_for
 import mysql.connector
@@ -12,6 +14,22 @@ app = Flask(__name__)
 
 # Database connection
 def get_db_connection():
+
+    # Check for EthioDeploy online database
+    db_url = os.environ.get("DATABASE_URL")
+
+    if db_url:
+        db = urlparse(db_url)
+
+        return mysql.connector.connect(
+            host=db.hostname,
+            port=db.port or 3306,
+            user=unquote(db.username),
+            password=unquote(db.password),
+            database=db.path.lstrip("/")
+        )
+
+    # Local MySQL database connection
     return mysql.connector.connect(
         host=os.environ.get("DB_HOST"),
         port=int(os.environ.get("DB_PORT", 3306)),
@@ -143,6 +161,7 @@ def delete_contact(id):
 # Run Flask application
 if __name__ == '__main__':
     app.run(debug=True)
+
 
 
 
